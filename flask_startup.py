@@ -52,13 +52,14 @@ def get_activate_command(venv_name="venv"):
 def appFile():
     """Create the Flask app file"""
     try:
-        content = """from flask import Flask
+        content = """from flask import Flask, render_template
 
 app = Flask(__name__)
 
 @app.route("/")
 def main():
-    return "Palambing Please"
+    message = "Palambing Please"
+    return render_template("index.html", message=message)
 
 if __name__ == "__main__":
     app.run(debug=True)
@@ -69,6 +70,62 @@ if __name__ == "__main__":
         return True
     except Exception as e:
         print(f"Error creating app.py: {e}")
+        return False
+
+
+def htmlFile():
+    try:
+        content = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>{{message}}</h1>
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+</body>
+</html>
+"""
+        with open("templates/index.html", "w") as file:
+            file.write(content)
+        print("index.html created successfully")
+        return True
+    except Exception as e:
+        print(f"Error creating index.html: {e}")
+        return False
+    
+def cssFile():
+    try:
+        content = """
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+"""
+        with open("static/css/style.css", "w") as file:
+            file.write(content)
+        print("style.css created successfully")
+        return True
+    except Exception as e:
+        print(f"Error creating style.css: {e}")
+        return False
+    
+def jsFile():
+    try:
+        content = """
+console.log("Hello World");
+"""
+        with open("static/js/index.js", "w") as file:
+            file.write(content)
+        print("index.js created successfully")
+        return True
+    except Exception as e:
+        print(f"Error creating index.js: {e}")
         return False
 
 def print_help():
@@ -85,23 +142,39 @@ def print_help():
 
 def main(venv_name="venv"):
     """Main function to set up the Flask environment"""
-    if not creating_venv(venv_name):
-        return False
+    folder = Path(venv_name)
+
+    if not folder.exists():
+        os.makedirs("templates", exist_ok=True)
+        os.makedirs("static/css", exist_ok=True)
+        os.makedirs("static/js", exist_ok=True)
+        if not creating_venv(venv_name):
+            return False
+            
+        if not install_flask(venv_name):
+            return False
+            
+        if not appFile():
+            return False
         
-    if not install_flask(venv_name):
-        return False
+        if not htmlFile():
+            return False
         
-    if not appFile():
-        return False
+        if not cssFile():
+            return False
         
-    print("\nSetup completed! Next steps:")
-    print(f"1. Activate the virtual environment: {get_activate_command(venv_name)}")
-    print("2. Run: python app.py or flask run")
-    
-    return True
+        if not jsFile():
+            return False
+            
+        print("\nSetup completed! Next steps:")
+        print(f"1. Activate the virtual environment: {get_activate_command(venv_name)}")
+        print("2. Run: python app.py or flask run")
+        return True
+    else:
+        print(f"You have a folder name '{venv_name}' already exists.")
 
 if __name__ == "__main__":
-    if len(sys.argv) == 1 or sys.argv[1] in ("-h", "--help", "kupal"):
+    if len(sys.argv) == 1 or sys.argv[1] in ("-h", "--help"):
         print_help()
     elif sys.argv[1] == "-start":
         venv_name = sys.argv[2] if len(sys.argv) > 2 else "venv"
